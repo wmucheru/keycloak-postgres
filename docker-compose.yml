@@ -1,0 +1,63 @@
+version: "3.9"
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.6
+    container_name: keycloak-app
+    restart: unless-stopped
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - DB=postgres
+      - DB_HOSTNAME=postgres
+      - DB_PORT=3306
+      - DB_ADDR=postgres
+      - DB_SCHEMA=public
+      - DB_USERNAME=admin
+      - DB_PASSWORD=admin
+    command:
+      - start-dev
+    ports:
+      - 8080:8080
+    volumes:
+      - ./config/realm.json:/opt/keycloak/data/import/realm.json
+    networks:
+      - keycloak
+    depends_on:
+      - postgres
+
+  postgres:
+    image: bitnami/postgresql:15.5.0
+    container_name: postgres
+    restart: always
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    ports:
+      - 5432:5432
+    volumes:
+      - ./data/pgsql:/bitnami/postgresql
+    networks:
+      - keycloak
+
+  pgadmin4:
+    image: dpage/pgadmin4
+    container_name: pgadmin4
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=test@example.com
+      - PGADMIN_DEFAULT_PASSWORD=Admin@123
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    ports:
+      - 8090:80
+    volumes:
+      - ./data/pgadmin:/var/lib/pgadmin
+    networks:
+      - keycloak
+    depends_on:
+      - postgres
+
+networks:
+  keycloak:
+    driver: bridge
